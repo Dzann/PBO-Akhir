@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 19, 2026 at 07:59 AM
+-- Generation Time: Jul 19, 2026 at 08:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -81,10 +81,25 @@ CREATE TABLE `tbl_detail_transaksi` (
 -- Triggers `tbl_detail_transaksi`
 --
 DELIMITER $$
-CREATE TRIGGER `trig_kurangi_stok` AFTER INSERT ON `tbl_detail_transaksi` FOR EACH ROW BEGIN
-    UPDATE tbl_barang 
-    SET stok = stok - NEW.jumlah 
+CREATE TRIGGER `trig_kurangi_stok` BEFORE INSERT ON `tbl_detail_transaksi` FOR EACH ROW BEGIN
+    DECLARE stok_sekarang INT;
+
+    -- 1. Ambil jumlah stok barang saat ini berdasarkan id_barang yang dibeli
+    SELECT stok INTO stok_sekarang 
+    FROM tbl_barang 
     WHERE id_barang = NEW.id_barang;
+
+    -- 2. Cek apakah stok mencukupi
+    IF stok_sekarang < NEW.jumlah THEN
+        -- Jika stok kurang, batalkan INSERT dan lemparkan pesan error kustom
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Transaksi Ditolak! Stok barang tidak mencukupi.';
+    ELSE
+        -- Jika stok cukup, lanjutkan pemotongan stok
+        UPDATE tbl_barang 
+        SET stok = stok - NEW.jumlah 
+        WHERE id_barang = NEW.id_barang;
+    END IF;
 END
 $$
 DELIMITER ;
