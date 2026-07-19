@@ -27,7 +27,7 @@ public class MainMenuForm extends JFrame {
         btnTransaksi.addActionListener(e -> new TransaksiForm().setVisible(true));
         btnLaporan.addActionListener(e -> new LaporanForm().setVisible(true));
         btnLogout.addActionListener(e -> {
-            // new LoginForm().setVisible(true);
+            new LoginForm().setVisible(true);
             this.dispose();
         });
     }
